@@ -105,13 +105,18 @@ class ClosedLoop:
         actions = np.zeros(T)
         self.plant.reset_state()
 
+        
         for t in range(T):
             positions[t] = self.plant.get_position()
-            observation_t = self.plant.get_depth()
-            # Call your controller here
-            self.plant.transition(actions[t], disturbances[t])
+            observation_t = self.plant.get_depth()  # Get the current depth of the submarine
+            reference_t = mission.reference[t]     # Reference depth at time t
+            # Compute the control action using the controller
+            control_action = self.controller.control(reference_t, observation_t)
+            # Apply the control action along with the disturbance to the submarine
+            self.plant.transition(control_action, disturbances[t])
 
         return Trajectory(positions)
+        
         
     def simulate_with_random_disturbances(self, mission: Mission, variance: float = 0.5) -> Trajectory:
         disturbances = np.random.normal(0, variance, len(mission.reference))
